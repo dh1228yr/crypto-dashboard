@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>거래소별 잔고 대시보드</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; font-size: 24px; }
+        .btn-group { display: flex; gap: 10px; }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        button:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-secondary { background: #e2e8f0; color: #333; }
+        .btn-danger { background: #f56565; color: white; }
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .card h2 { margin-bottom: 20px; color: #333; }
+        .exchange-section {
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+        .exchange-title {
+            color: #333;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .hidden { display: none; }
+        .total-balance {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .balance-item {
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            color: white;
+        }
+        .balance-label { 
+            font-size: 14px; 
+            opacity: 0.9; 
+            margin-bottom: 10px;
+        }
+        .balance-amount { 
+            font-size: 32px; 
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        .balance-subtitle {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+        .exchanges-container {
+            display: grid;
+            gap: 30px;
+        }
+        .exchange-group h3 {
+            font-size: 18px;
+            color: #667eea;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+        .exchanges-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .exchange-card {
+            text-align: center;
+            padding: 25px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border-radius: 12px;
+            color: white;
+        }
+        .exchange-name {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 12px;
+        }
+        .exchange-amount {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .exchange-percentage {
+            font-size: 14px;
+            font-weight: 600;
+            opacity: 0.9;
+        }
+        .spinner {
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .backup-buttons {
+            display: grid;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .backup-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏦 거래소별 잔고 대시보드</h1>
+            <div class="btn-group">
+                <button class="btn-secondary" onclick="showSettings()">⚙️ 설정</button>
+                <button class="btn-primary" onclick="fetchBalances()">🔄 새로고침</button>
+                <button class="btn-danger" onclick="resetAll()">🗑️ 초기화</button>
+            </div>
+        </div>
+
+        <!-- 설정 화면 -->
+        <div id="settingsView" class="card hidden">
+            <h2>⚙️ API 키 설정</h2>
+            
+            <div class="exchange-section">
+                <div class="exchange-title">📝 업비트 (Upbit)</div>
+                <input type="text" id="upbit-access" placeholder="Access Key">
+                <input type="password" id="upbit-secret" placeholder="Secret Key">
+            </div>
+            
+            <div class="exchange-section">
+                <div class="exchange-title">📝 빗썸 (Bithumb)</div>
+                <input type="text" id="bithumb-connect" placeholder="Connect Key">
+                <input type="password" id="bithumb-secret" placeholder="Secret Key">
+            </div>
+            
+            <div class="exchange-section">
+                <div class="exchange-title">📝 바이낸스 (Binance)</div>
+                <input type="text" id="binance-api" placeholder="API Key">
+                <input type="password" id="binance-secret" placeholder="Secret Key">
+            </div>
+            
+            <div class="exchange-section">
+                <div class="exchange-title">📝 바이빗 (Bybit)</div>
+                <input type="text" id="bybit-api" placeholder="API Key">
+                <input type="password" id="bybit-secret" placeholder="Secret Key">
+            </div>
+            
+            <div class="exchange-section">
+                <div class="exchange-title">📝 OKX</div>
+                <input type="text" id="okx-api" placeholder="API Key">
+                <input type="password" id="okx-secret" placeholder="Secret Key">
+                <input type="password" id="okx-pass" placeholder="Passphrase">
+            </div>
+            
+            <div class="backup-buttons">
+                <button class="btn-primary" onclick="saveKeys()" style="width: 100%;">💾 저장하고 조회하기</button>
+                <div class="backup-row">
+                    <button class="btn-secondary" onclick="exportSettings()">📤 설정 내보내기</button>
+                    <button class="btn-secondary" onclick="importSettings()">📥 설정 가져오기</button>
+                </div>
+            </div>
+            <input type="file" id="import-file" accept=".json" style="display: none;" onchange="handleImport(event)">
+        </div>
+
+        <!-- 환영 화면 -->
+        <div id="welcomeView" class="card hidden">
+            <h2>✅ API 키가 저장되었습니다</h2>
+            <p>아래 버튼을 클릭하여 잔고를 조회하세요.</p>
+            <br>
+            <button class="btn-primary" onclick="fetchBalances()">🔍 잔고 조회하기</button>
+        </div>
+
+        <!-- 로딩 화면 -->
+        <div id="loadingView" class="card hidden">
+            <div class="spinner"></div>
+            <p style="text-align: center; color: #666;">거래소 잔고를 조회하고 있습니다...</p>
+        </div>
+
+        <!-- 대시보드 -->
+        <div id="dashboardView" class="hidden">
+            <!-- 총 자산 -->
+            <div class="card">
+                <h2>💰 총 자산</h2>
+                <div class="total-balance">
+                    <div class="balance-item">
+                        <div class="balance-label">국내 거래소</div>
+                        <div class="balance-amount" id="total-krw">0</div>
+                        <div class="balance-subtitle">업비트 + 빗썸</div>
+                    </div>
+                    <div class="balance-item">
+                        <div class="balance-label">해외 거래소</div>
+                        <div class="balance-amount" id="total-usdt">0</div>
+                        <div class="balance-subtitle">바이낸스 + 바이빗 + OKX</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 거래소별 잔고 -->
+            <div class="card">
+                <h2>📊 거래소별 잔고</h2>
+                <div class="exchanges-container">
+                    <div class="exchange-group">
+                        <h3>🇰🇷 국내 거래소 (KRW)</h3>
+                        <div class="exchanges-grid" id="domestic-exchanges"></div>
+                    </div>
+                    
+                    <div class="exchange-group">
+                        <h3>🌍 해외 거래소 (USDT)</h3>
+                        <div class="exchanges-grid" id="foreign-exchanges"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function saveToStorage(data) {
+            var json = JSON.stringify(data);
+            var encoded = btoa(unescape(encodeURIComponent(json)));
+            localStorage.setItem('keys', encoded);
+        }
+
+        function loadFromStorage() {
+            var encoded = localStorage.getItem('keys');
+            if (!encoded) return null;
+            try {
+                var json = decodeURIComponent(escape(atob(encoded)));
+                return JSON.parse(json);
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function hideAll() {
+            document.getElementById('settingsView').classList.add('hidden');
+            document.getElementById('welcomeView').classList.add('hidden');
+            document.getElementById('loadingView').classList.add('hidden');
+            document.getElementById('dashboardView').classList.add('hidden');
+        }
+
+        function init() {
+            var saved = loadFromStorage();
+            if (saved) {
+                hideAll();
+                document.getElementById('welcomeView').classList.remove('hidden');
+            } else {
+                hideAll();
+                document.getElementById('settingsView').classList.remove('hidden');
+            }
+        }
+
+        function showSettings() {
+            var saved = loadFromStorage();
+            if (saved) {
+                document.getElementById('upbit-access').value = saved.upbit.access;
+                document.getElementById('upbit-secret').value = saved.upbit.secret;
+                document.getElementById('bithumb-connect').value = saved.bithumb.connect;
+                document.getElementById('bithumb-secret').value = saved.bithumb.secret;
+                document.getElementById('binance-api').value = saved.binance.api;
+                document.getElementById('binance-secret').value = saved.binance.secret;
+                document.getElementById('bybit-api').value = saved.bybit.api;
+                document.getElementById('bybit-secret').value = saved.bybit.secret;
+                document.getElementById('okx-api').value = saved.okx.api;
+                document.getElementById('okx-secret').value = saved.okx.secret;
+                document.getElementById('okx-pass').value = saved.okx.pass;
+            }
+            hideAll();
+            document.getElementById('settingsView').classList.remove('hidden');
+        }
+
+        function saveKeys() {
+            var keys = {
+                upbit: {
+                    access: document.getElementById('upbit-access').value,
+                    secret: document.getElementById('upbit-secret').value
+                },
+                bithumb: {
+                    connect: document.getElementById('bithumb-connect').value,
+                    secret: document.getElementById('bithumb-secret').value
+                },
+                binance: {
+                    api: document.getElementById('binance-api').value,
+                    secret: document.getElementById('binance-secret').value
+                },
+                bybit: {
+                    api: document.getElementById('bybit-api').value,
+                    secret: document.getElementById('bybit-secret').value
+                },
+                okx: {
+                    api: document.getElementById('okx-api').value,
+                    secret: document.getElementById('okx-secret').value,
+                    pass: document.getElementById('okx-pass').value
+                }
+            };
+            saveToStorage(keys);
+            fetchBalances();
+        }
+
+        function fetchBalances() {
+            hideAll();
+            document.getElementById('loadingView').classList.remove('hidden');
+            
+            var keys = loadFromStorage();
+            if (!keys) {
+                alert('API 키를 먼저 설정하세요!');
+                showSettings();
+                return;
+            }
+            
+            Promise.all([
+                fetch('http://localhost:3000/api/upbit/balance', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        accessKey: keys.upbit.access,
+                        secretKey: keys.upbit.secret
+                    })
+                }).then(function(r) { return r.json(); }),
+                
+                fetch('http://localhost:3000/api/bithumb/balance', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        connectKey: keys.bithumb.connect,
+                        secretKey: keys.bithumb.secret
+                    })
+                }).then(function(r) { return r.json(); }),
+                
+                fetch('http://localhost:3000/api/binance/balance', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        apiKey: keys.binance.api,
+                        secretKey: keys.binance.secret
+                    })
+                }).then(function(r) { return r.json(); }),
+                
+                fetch('http://localhost:3000/api/bybit/balance', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        apiKey: keys.bybit.api,
+                        secretKey: keys.bybit.secret
+                    })
+                }).then(function(r) { return r.json(); }),
+                
+                fetch('http://localhost:3000/api/okx/balance', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        apiKey: keys.okx.api,
+                        secretKey: keys.okx.secret,
+                        passphrase: keys.okx.pass
+                    })
+                }).then(function(r) { return r.json(); })
+                
+            ]).then(function(results) {
+                var upbitData = results[0];
+                var bithumbData = results[1];
+                var binanceData = results[2];
+                var bybitData = results[3];
+                var okxData = results[4];
+                
+                var upbitBalance = upbitData.success ? upbitData.balance : 0;
+                var bithumbBalance = bithumbData.success ? bithumbData.balance : 0;
+                var domesticTotal = upbitBalance + bithumbBalance;
+                
+                var binanceBalance = binanceData.success ? binanceData.balance : 0;
+                var bybitBalance = bybitData.success ? bybitData.balance : 0;
+                var okxBalance = okxData.success ? okxData.balance : 0;
+                var foreignTotal = binanceBalance + bybitBalance + okxBalance;
+                
+                var upbitPercent = domesticTotal > 0 ? Math.round((upbitBalance / domesticTotal) * 100) : 0;
+                var bithumbPercent = domesticTotal > 0 ? Math.round((bithumbBalance / domesticTotal) * 100) : 0;
+                
+                var binancePercent = foreignTotal > 0 ? Math.round((binanceBalance / foreignTotal) * 100) : 0;
+                var bybitPercent = foreignTotal > 0 ? Math.round((bybitBalance / foreignTotal) * 100) : 0;
+                var okxPercent = foreignTotal > 0 ? Math.round((okxBalance / foreignTotal) * 100) : 0;
+                
+                var data = {
+                    domestic: {
+                        total: domesticTotal,
+                        exchanges: [
+                            { name: '업비트', amount: upbitBalance, percent: upbitPercent },
+                            { name: '빗썸', amount: bithumbBalance, percent: bithumbPercent }
+                        ]
+                    },
+                    foreign: {
+                        total: foreignTotal,
+                        exchanges: [
+                            { name: '바이낸스', amount: binanceBalance, percent: binancePercent },
+                            { name: '바이빗', amount: bybitBalance, percent: bybitPercent },
+                            { name: 'OKX', amount: okxBalance, percent: okxPercent }
+                        ]
+                    }
+                };
+                
+                console.log('잔고 조회 성공:', data);
+                showDashboard(data);
+                
+            }).catch(function(error) {
+                console.error('잔고 조회 실패:', error);
+                hideAll();
+                alert('잔고 조회 실패: ' + error.message + '\n\n서버가 실행 중인지 확인하세요!');
+                document.getElementById('welcomeView').classList.remove('hidden');
+            });
+        }
+
+        function showDashboard(data) {
+            hideAll();
+            
+            document.getElementById('total-krw').textContent = data.domestic.total.toLocaleString() + ' KRW';
+            document.getElementById('total-usdt').textContent = data.foreign.total.toLocaleString() + ' USDT';
+            
+            var domesticGrid = document.getElementById('domestic-exchanges');
+            domesticGrid.innerHTML = '';
+            for (var i = 0; i < data.domestic.exchanges.length; i++) {
+                var ex = data.domestic.exchanges[i];
+                var div = document.createElement('div');
+                div.className = 'exchange-card';
+                div.innerHTML = '<div class="exchange-name">' + ex.name + '</div>' +
+                               '<div class="exchange-amount">' + (ex.amount / 1000).toFixed(0) + 'K KRW</div>' +
+                               '<div class="exchange-percentage">' + ex.percent + '%</div>';
+                domesticGrid.appendChild(div);
+            }
+            
+            var foreignGrid = document.getElementById('foreign-exchanges');
+            foreignGrid.innerHTML = '';
+            for (var j = 0; j < data.foreign.exchanges.length; j++) {
+                var ex = data.foreign.exchanges[j];
+                var div = document.createElement('div');
+                div.className = 'exchange-card';
+                div.innerHTML = '<div class="exchange-name">' + ex.name + '</div>' +
+                               '<div class="exchange-amount">' + ex.amount.toLocaleString() + ' USDT</div>' +
+                               '<div class="exchange-percentage">' + ex.percent + '%</div>';
+                foreignGrid.appendChild(div);
+            }
+            
+            document.getElementById('dashboardView').classList.remove('hidden');
+        }
+
+        function resetAll() {
+            if (confirm('모든 설정을 초기화하시겠습니까?')) {
+                localStorage.removeItem('keys');
+                document.getElementById('upbit-access').value = '';
+                document.getElementById('upbit-secret').value = '';
+                document.getElementById('bithumb-connect').value = '';
+                document.getElementById('bithumb-secret').value = '';
+                document.getElementById('binance-api').value = '';
+                document.getElementById('binance-secret').value = '';
+                document.getElementById('bybit-api').value = '';
+                document.getElementById('bybit-secret').value = '';
+                document.getElementById('okx-api').value = '';
+                document.getElementById('okx-secret').value = '';
+                document.getElementById('okx-pass').value = '';
+                hideAll();
+                document.getElementById('settingsView').classList.remove('hidden');
+            }
+        }
+
+        // 설정 내보내기
+        function exportSettings() {
+            var keys = loadFromStorage();
+            if (!keys) {
+                alert('⚠️ 저장된 설정이 없습니다!\n\n먼저 API 키를 입력하고 저장하세요.');
+                return;
+            }
+            
+            var dataStr = JSON.stringify(keys, null, 2);
+            var dataBlob = new Blob([dataStr], {type: 'application/json'});
+            var url = URL.createObjectURL(dataBlob);
+            var link = document.createElement('a');
+            link.href = url;
+            var timestamp = new Date().toISOString().slice(0,10);
+            link.download = 'crypto-dashboard-backup-' + timestamp + '.json';
+            link.click();
+            URL.revokeObjectURL(url);
+            
+            alert('✅ 설정을 파일로 내보냈습니다!\n\n📁 파일명: crypto-dashboard-backup-' + timestamp + '.json\n\n⚠️ 이 파일에는 API 키가 포함되어 있습니다.\n안전한 곳에 보관하세요!');
+        }
+        
+        // 설정 가져오기 버튼
+        function importSettings() {
+            document.getElementById('import-file').click();
+        }
+        
+        // 파일 선택 시 처리
+        function handleImport(event) {
+            var file = event.target.files[0];
+            if (!file) return;
+            
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    var importedKeys = JSON.parse(e.target.result);
+                    
+                    // 유효성 검사
+                    if (!importedKeys.upbit || !importedKeys.binance) {
+                        alert('❌ 올바른 설정 파일이 아닙니다!');
+                        return;
+                    }
+                    
+                    // localStorage에 저장
+                    saveToStorage(importedKeys);
+                    
+                    // 입력 폼에 표시
+                    document.getElementById('upbit-access').value = importedKeys.upbit.access || '';
+                    document.getElementById('upbit-secret').value = importedKeys.upbit.secret || '';
+                    document.getElementById('bithumb-connect').value = importedKeys.bithumb.connect || '';
+                    document.getElementById('bithumb-secret').value = importedKeys.bithumb.secret || '';
+                    document.getElementById('binance-api').value = importedKeys.binance.api || '';
+                    document.getElementById('binance-secret').value = importedKeys.binance.secret || '';
+                    document.getElementById('bybit-api').value = importedKeys.bybit.api || '';
+                    document.getElementById('bybit-secret').value = importedKeys.bybit.secret || '';
+                    document.getElementById('okx-api').value = importedKeys.okx.api || '';
+                    document.getElementById('okx-secret').value = importedKeys.okx.secret || '';
+                    document.getElementById('okx-pass').value = importedKeys.okx.pass || '';
+                    
+                    alert('✅ 설정을 성공적으로 가져왔습니다!\n\n"저장하고 조회하기" 버튼을 눌러주세요.');
+                    
+                } catch (error) {
+                    alert('❌ 파일을 읽는 중 오류가 발생했습니다!\n\n' + error.message);
+                }
+                
+                // 파일 입력 초기화
+                event.target.value = '';
+            };
+            reader.readAsText(file);
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
