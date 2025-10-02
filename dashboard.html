@@ -360,7 +360,7 @@
             }
             
             Promise.all([
-                fetch('http://localhost:3000/api/upbit/balance', {
+                fetch('https://crypto-dashboard-xnwp.onrender.com/api/upbit/balance', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -369,7 +369,7 @@
                     })
                 }).then(function(r) { return r.json(); }),
                 
-                fetch('http://localhost:3000/api/bithumb/balance', {
+                fetch('https://crypto-dashboard-xnwp.onrender.com/api/bithumb/balance', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -378,7 +378,7 @@
                     })
                 }).then(function(r) { return r.json(); }),
                 
-                fetch('http://localhost:3000/api/binance/balance', {
+                fetch('https://crypto-dashboard-xnwp.onrender.com/api/binance/balance', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -387,7 +387,7 @@
                     })
                 }).then(function(r) { return r.json(); }),
                 
-                fetch('http://localhost:3000/api/bybit/balance', {
+                fetch('https://crypto-dashboard-xnwp.onrender.com/api/bybit/balance', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -396,7 +396,7 @@
                     })
                 }).then(function(r) { return r.json(); }),
                 
-                fetch('http://localhost:3000/api/okx/balance', {
+                fetch('https://crypto-dashboard-xnwp.onrender.com/api/okx/balance', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
