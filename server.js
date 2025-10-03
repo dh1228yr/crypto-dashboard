@@ -156,13 +156,13 @@ app.post('/api/bybit/balance', async (req, res) => {
         );
         
         let balance = 0;
+        // 조건문 밖으로 이동 - 무조건 출력
+        console.log('Bybit API Response:', JSON.stringify(response.data, null, 2));
+        
         if (response.data.result && response.data.result.list && response.data.result.list.length > 0) {
             const account = response.data.result.list[0];
-            // Unified Trading 계정의 총 자산
-            // 모든 데이터 출력해서 구조 확인
-            console.log('Bybit API Response:', JSON.stringify(response.data, null, 2));
-            
-            balance = parseFloat(account.totalEquity || account.totalWalletBalance || account.totalAvailableBalance || 0);
+            balance = parseFloat(account.totalEquity || ...);
+        }
     
             // 모든 코인 잔고 합산 (대안)
             if (balance === 0 && account.coin) {
@@ -241,4 +241,5 @@ app.listen(PORT, HOST, () => {
     console.log('===========================================');
 
 });
+
 
