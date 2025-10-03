@@ -143,6 +143,8 @@ app.post('/api/bybit/balance', async (req, res) => {
         const queryString = 'api_key=' + apiKey + '&recv_window=' + recvWindow + '&timestamp=' + timestamp;
         const signature = crypto.createHmac('sha256', secretKey).update(queryString).digest('hex');
         
+        console.log('Bybit Request URL:', 'https://api.bybit.com/v5/account/wallet-balance?accountType=UNIFIED&' + queryString + '&sign=' + signature);
+        
         const response = await axios.get(
             'https://api.bybit.com/v5/account/wallet-balance?accountType=UNIFIED&' + queryString + '&sign=' + signature,
             {
@@ -154,6 +156,8 @@ app.post('/api/bybit/balance', async (req, res) => {
                 }
             }
         );
+        
+        console.log('Bybit Raw Response:', JSON.stringify(response.data, null, 2));
         
         let balance = 0;
         console.log('Bybit API Response:', JSON.stringify(response.data, null, 2));
@@ -177,6 +181,7 @@ app.post('/api/bybit/balance', async (req, res) => {
         
     } catch (error) {
         console.error('Bybit Error:', error.response ? error.response.data : error.message);
+        console.error('Bybit Full Error:', JSON.stringify(error.response?.data || error, null, 2));
         res.json({ 
             success: false, 
             error: error.message,
@@ -239,6 +244,7 @@ app.listen(PORT, HOST, () => {
     console.log('===========================================');
 
 });
+
 
 
 
