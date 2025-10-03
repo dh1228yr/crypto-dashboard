@@ -137,41 +137,35 @@ app.post('/api/bybit/balance', async (req, res) => {
     try {
         const { apiKey, secretKey } = req.body;
         
-        const timestamp = Date.now();
-        const recvWindow = 5000;
+        const timestamp = Date.now().toString();
+        const recvWindow = '5000';
         
-        const queryString = 'api_key=' + apiKey + '&recv_window=' + recvWindow + '&timestamp=' + timestamp;
-        const signature = crypto.createHmac('sha256', secretKey).update(queryString).digest('hex');
+        // V5 API Signature: timestamp + apiKey + recvWindow + queryString
+        const queryString = 'accountType=UNIFIED';
+        const signStr = timestamp + apiKey + recvWindow + queryString;
+        const signature = crypto.createHmac('sha256', secretKey).update(signStr).digest('hex');
         
-        console.log('Bybit Request URL:', 'https://api.bybit.com/v5/account/wallet-balance?accountType=UNIFIED&' + queryString + '&sign=' + signature);
+        console.log('Bybit Sign String:', signStr);
+        console.log('Bybit Signature:', signature);
         
         const response = await axios.get(
-            'https://api.bybit.com/v5/account/wallet-balance?accountType=UNIFIED&' + queryString + '&sign=' + signature,
+            'https://api.bybit.com/v5/account/wallet-balance?accountType=UNIFIED',
             {
                 headers: {
                     'X-BAPI-API-KEY': apiKey,
-                    'X-BAPI-TIMESTAMP': timestamp.toString(),
+                    'X-BAPI-TIMESTAMP': timestamp,
                     'X-BAPI-SIGN': signature,
-                    'X-BAPI-RECV-WINDOW': recvWindow.toString()
+                    'X-BAPI-RECV-WINDOW': recvWindow
                 }
             }
         );
         
-        console.log('Bybit Raw Response:', JSON.stringify(response.data, null, 2));
-        
-        let balance = 0;
         console.log('Bybit API Response:', JSON.stringify(response.data, null, 2));
         
+        let balance = 0;
         if (response.data.result && response.data.result.list && response.data.result.list.length > 0) {
             const account = response.data.result.list[0];
-            balance = parseFloat(account.totalEquity || account.totalWalletBalance || account.totalAvailableBalance || 0);
-            
-            // 모든 코인 잔고 합산 (대안)
-            if (balance === 0 && account.coin) {
-                account.coin.forEach(function(c) {
-                    balance = balance + parseFloat(c.walletBalance || 0);
-                });
-            }
+            balance = parseFloat(account.totalEquity || 0);
         }
         
         res.json({ 
@@ -181,51 +175,6 @@ app.post('/api/bybit/balance', async (req, res) => {
         
     } catch (error) {
         console.error('Bybit Error:', error.response ? error.response.data : error.message);
-        console.error('Bybit Full Error:', JSON.stringify(error.response?.data || error, null, 2));
-        res.json({ 
-            success: false, 
-            error: error.message,
-            balance: 0
-        });
-    }
-});
-
-// OKX API
-app.post('/api/okx/balance', async (req, res) => {
-    try {
-        const { apiKey, secretKey, passphrase } = req.body;
-        
-        const timestamp = new Date().toISOString();
-        const method = 'GET';
-        const requestPath = '/api/v5/account/balance';
-        
-        const prehash = timestamp + method + requestPath;
-        const signature = crypto.createHmac('sha256', secretKey).update(prehash).digest('base64');
-        
-        const response = await axios.get(
-            'https://www.okx.com' + requestPath,
-            {
-                headers: {
-                    'OK-ACCESS-KEY': apiKey,
-                    'OK-ACCESS-SIGN': signature,
-                    'OK-ACCESS-TIMESTAMP': timestamp,
-                    'OK-ACCESS-PASSPHRASE': passphrase
-                }
-            }
-        );
-        
-        let balance = 0;
-        if (response.data.data && response.data.data[0]) {
-            balance = parseFloat(response.data.data[0].totalEq || 0);
-        }
-        
-        res.json({ 
-            success: true, 
-            balance: balance
-        });
-        
-    } catch (error) {
-        console.error('OKX Error:', error.response ? error.response.data : error.message);
         res.json({ 
             success: false, 
             error: error.message,
@@ -244,6 +193,7 @@ app.listen(PORT, HOST, () => {
     console.log('===========================================');
 
 });
+
 
 
 
