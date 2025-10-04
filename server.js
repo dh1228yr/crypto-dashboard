@@ -69,23 +69,27 @@ app.post('/api/bithumb/balance', async (req, res) => {
         const nonce = Date.now().toString();
         const currency = 'BTC';
         
-        // POST body 데이터
         const params = 'currency=' + currency;
         
         // Signature: endpoint + \0 + params + \0 + nonce
         const signData = endpoint + String.fromCharCode(0) + params + String.fromCharCode(0) + nonce;
-        const signature = crypto.createHmac('sha512', secretKey).update(signData).digest('hex');
+        
+        // Secret Key를 Base64 디코드 시도
+        let secretKeyForSign = secretKey;
+        try {
+            secretKeyForSign = Buffer.from(secretKey, 'base64').toString('utf-8');
+            console.log('Secret Key decoded from Base64');
+        } catch (e) {
+            console.log('Using Secret Key as-is');
+        }
+        
+        const signature = crypto.createHmac('sha512', secretKeyForSign).update(signData).digest('hex');
         
         console.log('=== Bithumb Request Debug ===');
-        console.log('Endpoint:', endpoint);
-        console.log('Params:', params);
-        console.log('Nonce:', nonce);
-        console.log('Connect Key:', connectKey);
-        console.log('Secret Key:', secretKey);
-        console.log('Sign Data:', signData.replace(/\0/g, '[NULL]'));
+        console.log('Original Secret Key:', secretKey);
+        console.log('Secret Key for Sign:', secretKeyForSign);
         console.log('Signature:', signature);
         
-        // POST 요청
         const response = await axios.post(
             'https://api.bithumb.com' + endpoint,
             params,
@@ -239,6 +243,7 @@ app.listen(PORT, HOST, () => {
     console.log('📊 대시보드를 열고 API 키를 입력하세요!');
     console.log('===========================================');
 });
+
 
 
 
