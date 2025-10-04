@@ -145,8 +145,12 @@ app.post('/api/bybit/balance', async (req, res) => {
         const signStr = timestamp + apiKey + recvWindow + queryString;
         const signature = crypto.createHmac('sha256', secretKey).update(signStr).digest('hex');
         
-        console.log('Bybit Sign String:', signStr);
-        console.log('Bybit Signature:', signature);
+        // ✅ 디버깅 로그 강화
+        console.log('=== Bybit Request Debug ===');
+        console.log('Timestamp:', timestamp);
+        console.log('API Key:', apiKey.substring(0, 8) + '...');
+        console.log('Sign String:', signStr);
+        console.log('Signature:', signature);
         
         const response = await axios.get(
             'https://api.bybit.com/v5/account/wallet-balance?accountType=UNIFIED',
@@ -174,10 +178,21 @@ app.post('/api/bybit/balance', async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Bybit Error:', error.response ? error.response.data : error.message);
+        // ✅ 에러 로그 상세화
+        console.error('=== Bybit Error Details ===');
+        console.error('Message:', error.message);
+        
+        if (error.response) {
+            console.error('Status:', error.response.status);
+            console.error('Headers:', error.response.headers);
+            console.error('Data:', JSON.stringify(error.response.data, null, 2));
+        } else {
+            console.error('No Response:', error);
+        }
+        
         res.json({ 
             success: false, 
-            error: error.message,
+            error: error.response?.data || error.message,
             balance: 0
         });
     }
@@ -193,6 +208,7 @@ app.listen(PORT, HOST, () => {
     console.log('===========================================');
 
 });
+
 
 
 
