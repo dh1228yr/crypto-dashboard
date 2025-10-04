@@ -67,19 +67,23 @@ app.post('/api/bithumb/balance', async (req, res) => {
         
         const endpoint = '/info/balance';
         const nonce = Date.now().toString();
-        const params = 'currency=ALL';
+        const parameters = 'currency=ALL';
         
-        const data = endpoint + String.fromCharCode(0) + params + String.fromCharCode(0) + nonce;
+        // 올바른 signature 생성: endpoint + \0 + parameters + \0 + nonce
+        const data = endpoint + String.fromCharCode(0) + parameters + String.fromCharCode(0) + nonce;
         const signature = crypto.createHmac('sha512', secretKey).update(data).digest('hex');
         
         console.log('=== Bithumb Request Debug ===');
-        console.log('Endpoint:', endpoint);
+        console.log('Connect Key:', connectKey.substring(0, 10) + '...');
         console.log('Nonce:', nonce);
-        console.log('Params:', params);
-        console.log('Data String:', data);
+        console.log('Endpoint:', endpoint);
+        console.log('Parameters:', parameters);
+        console.log('Data length:', data.length);
+        console.log('Signature:', signature.substring(0, 20) + '...');
         
-        const response = await axios.post('https://api.bithumb.com/info/balance', 
-            params,
+        const response = await axios.post(
+            'https://api.bithumb.com/info/balance',
+            parameters,
             {
                 headers: {
                     'Api-Key': connectKey,
@@ -117,6 +121,7 @@ app.post('/api/bithumb/balance', async (req, res) => {
         });
     }
 });
+
 // 바이낸스 API
 app.post('/api/binance/balance', async (req, res) => {
     try {
@@ -228,5 +233,6 @@ app.listen(PORT, HOST, () => {
     console.log('📊 대시보드를 열고 API 키를 입력하세요!');
     console.log('===========================================');
 });
+
 
 
