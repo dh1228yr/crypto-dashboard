@@ -71,19 +71,17 @@ app.post('/api/bithumb/balance', async (req, res) => {
         
         const queryString = 'currency=' + currency;
         
-        // Signature 생성
+        // Signature 생성: endpoint + \0 + queryString + \0 + nonce
         const signData = endpoint + String.fromCharCode(0) + queryString + String.fromCharCode(0) + nonce;
         
-        // Secret Key를 hex decode한 후 HMAC 생성
-        const secretKeyBuffer = Buffer.from(secretKey, 'hex');
-        const signature = crypto.createHmac('sha512', secretKeyBuffer).update(signData).digest('hex');
+        // Secret Key를 그대로 사용 (hex decode 제거)
+        const signature = crypto.createHmac('sha512', secretKey).update(signData).digest('hex');
         
         console.log('=== Bithumb Request Debug ===');
-        console.log('Endpoint:', endpoint);
-        console.log('QueryString:', queryString);
+        console.log('Connect Key:', connectKey);
         console.log('Nonce:', nonce);
-        console.log('Secret Key Length:', secretKey.length);
-        console.log('Signature:', signature.substring(0, 20) + '...');
+        console.log('Sign Data:', signData.split(String.fromCharCode(0)).join('[NULL]'));
+        console.log('Signature:', signature);
         
         const response = await axios({
             method: 'POST',
@@ -236,6 +234,7 @@ app.listen(PORT, HOST, () => {
     console.log('📊 대시보드를 열고 API 키를 입력하세요!');
     console.log('===========================================');
 });
+
 
 
 
