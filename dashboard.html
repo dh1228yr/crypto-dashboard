@@ -359,54 +359,101 @@
                 return;
             }
             
-            Promise.all([
-                fetch('https://crypto-dashboard-xnwp.onrender.com/api/upbit/balance', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        accessKey: keys.upbit.access,
-                        secretKey: keys.upbit.secret
-                    })
-                }).then(function(r) { return r.json(); }),
-                
-                fetch('https://crypto-dashboard-xnwp.onrender.com/api/bithumb/balance', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        connectKey: keys.bithumb.connect,
-                        secretKey: keys.bithumb.secret
-                    })
-                }).then(function(r) { return r.json(); }),
-                
-                fetch('https://crypto-dashboard-xnwp.onrender.com/api/binance/balance', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        apiKey: keys.binance.api,
-                        secretKey: keys.binance.secret
-                    })
-                }).then(function(r) { return r.json(); }),
-                
-                fetch('https://crypto-dashboard-xnwp.onrender.com/api/bybit/balance', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        apiKey: keys.bybit.api,
-                        secretKey: keys.bybit.secret
-                    })
-                }).then(function(r) { return r.json(); }),
-                
-                fetch('https://crypto-dashboard-xnwp.onrender.com/api/okx/balance', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        apiKey: keys.okx.api,
-                        secretKey: keys.okx.secret,
-                        passphrase: keys.okx.pass
-                    })
-                }).then(function(r) { return r.json(); })
-                
-            ]).then(function(results) {
+            var promises = [];
+            var exchangeNames = [];
+            
+            // Upbit - API 키가 있을 때만 조회
+            if (keys.upbit.access && keys.upbit.secret) {
+                promises.push(
+                    fetch('https://crypto-dashboard-xnwp.onrender.com/api/upbit/balance', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            accessKey: keys.upbit.access,
+                            secretKey: keys.upbit.secret
+                        })
+                    }).then(function(r) { return r.json(); }).catch(function() { return {success: false, balance: 0}; })
+                );
+                exchangeNames.push('upbit');
+            } else {
+                promises.push(Promise.resolve({success: false, balance: 0}));
+                exchangeNames.push('upbit');
+            }
+            
+            // Bithumb - API 키가 있을 때만 조회
+            if (keys.bithumb.connect && keys.bithumb.secret) {
+                promises.push(
+                    fetch('https://crypto-dashboard-xnwp.onrender.com/api/bithumb/balance', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            connectKey: keys.bithumb.connect,
+                            secretKey: keys.bithumb.secret
+                        })
+                    }).then(function(r) { return r.json(); }).catch(function() { return {success: false, balance: 0}; })
+                );
+                exchangeNames.push('bithumb');
+            } else {
+                promises.push(Promise.resolve({success: false, balance: 0}));
+                exchangeNames.push('bithumb');
+            }
+            
+            // Binance - API 키가 있을 때만 조회
+            if (keys.binance.api && keys.binance.secret) {
+                promises.push(
+                    fetch('https://crypto-dashboard-xnwp.onrender.com/api/binance/balance', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            apiKey: keys.binance.api,
+                            secretKey: keys.binance.secret
+                        })
+                    }).then(function(r) { return r.json(); }).catch(function() { return {success: false, balance: 0}; })
+                );
+                exchangeNames.push('binance');
+            } else {
+                promises.push(Promise.resolve({success: false, balance: 0}));
+                exchangeNames.push('binance');
+            }
+            
+            // Bybit - API 키가 있을 때만 조회
+            if (keys.bybit.api && keys.bybit.secret) {
+                promises.push(
+                    fetch('https://crypto-dashboard-xnwp.onrender.com/api/bybit/balance', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            apiKey: keys.bybit.api,
+                            secretKey: keys.bybit.secret
+                        })
+                    }).then(function(r) { return r.json(); }).catch(function() { return {success: false, balance: 0}; })
+                );
+                exchangeNames.push('bybit');
+            } else {
+                promises.push(Promise.resolve({success: false, balance: 0}));
+                exchangeNames.push('bybit');
+            }
+            
+            // OKX - API 키가 있을 때만 조회
+            if (keys.okx.api && keys.okx.secret && keys.okx.pass) {
+                promises.push(
+                    fetch('https://crypto-dashboard-xnwp.onrender.com/api/okx/balance', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            apiKey: keys.okx.api,
+                            secretKey: keys.okx.secret,
+                            passphrase: keys.okx.pass
+                        })
+                    }).then(function(r) { return r.json(); }).catch(function() { return {success: false, balance: 0}; })
+                );
+                exchangeNames.push('okx');
+            } else {
+                promises.push(Promise.resolve({success: false, balance: 0}));
+                exchangeNames.push('okx');
+            }
+            
+            Promise.all(promises).then(function(results) {
                 var upbitData = results[0];
                 var bithumbData = results[1];
                 var binanceData = results[2];
@@ -584,3 +631,4 @@
     </script>
 </body>
 </html>
+
