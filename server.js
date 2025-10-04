@@ -8,6 +8,13 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.get('/health', (req, res) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// 기존 코드들...
+app.post('/api/bybit/balance', async (req, res) => {
+
 const PORT = 3000;
 
 // 업비트 API
@@ -208,6 +215,7 @@ app.listen(PORT, HOST, () => {
     console.log('===========================================');
 
 });
+
 
 
 
