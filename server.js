@@ -67,7 +67,6 @@ app.post('/api/bithumb/balance', async (req, res) => {
         
         const endpoint = '/info/balance';
         const nonce = Date.now().toString();
-        const currency = 'BTC';
         
         const data = endpoint + String.fromCharCode(0) + 'currency=' + currency + String.fromCharCode(0) + nonce;
         const signature = crypto.createHmac('sha512', secretKey).update(data).digest('hex');
@@ -212,3 +211,4 @@ app.listen(PORT, HOST, () => {
     console.log('📊 대시보드를 열고 API 키를 입력하세요!');
     console.log('===========================================');
 });
+
