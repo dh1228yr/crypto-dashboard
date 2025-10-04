@@ -67,29 +67,34 @@ app.post('/api/bithumb/balance', async (req, res) => {
         
         const endpoint = '/info/balance';
         const nonce = Date.now().toString();
+        const currency = 'BTC';
         
-        // 파라미터 없이 시도
-        const params = '';
+        // POST body 데이터
+        const params = 'currency=' + currency;
         
         // Signature: endpoint + \0 + params + \0 + nonce
         const signData = endpoint + String.fromCharCode(0) + params + String.fromCharCode(0) + nonce;
         const signature = crypto.createHmac('sha512', secretKey).update(signData).digest('hex');
         
-        console.log('=== Bithumb Request Debug (No Params) ===');
+        console.log('=== Bithumb Request Debug ===');
         console.log('Endpoint:', endpoint);
-        console.log('Params:', params || '(empty)');
+        console.log('Params:', params);
         console.log('Nonce:', nonce);
-        console.log('Sign Data Length:', signData.length);
-        console.log('Signature:', signature.substring(0, 30) + '...');
+        console.log('Connect Key:', connectKey);
+        console.log('Secret Key:', secretKey);
+        console.log('Sign Data:', signData.replace(/\0/g, '[NULL]'));
+        console.log('Signature:', signature);
         
-        // GET 방식으로 시도
-        const response = await axios.get(
+        // POST 요청
+        const response = await axios.post(
             'https://api.bithumb.com' + endpoint,
+            params,
             {
                 headers: {
                     'Api-Key': connectKey,
                     'Api-Sign': signature,
-                    'Api-Nonce': nonce
+                    'Api-Nonce': nonce,
+                    'Content-Type': 'application/x-www-form-urlencoded'
                 }
             }
         );
@@ -234,6 +239,7 @@ app.listen(PORT, HOST, () => {
     console.log('📊 대시보드를 열고 API 키를 입력하세요!');
     console.log('===========================================');
 });
+
 
 
 
