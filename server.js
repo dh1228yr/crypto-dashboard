@@ -67,12 +67,19 @@ app.post('/api/bithumb/balance', async (req, res) => {
         
         const endpoint = '/info/balance';
         const nonce = Date.now().toString();
+        const params = 'currency=ALL';
         
-        const data = endpoint + String.fromCharCode(0) + 'currency=' + currency + String.fromCharCode(0) + nonce;
+        const data = endpoint + String.fromCharCode(0) + params + String.fromCharCode(0) + nonce;
         const signature = crypto.createHmac('sha512', secretKey).update(data).digest('hex');
         
+        console.log('=== Bithumb Request Debug ===');
+        console.log('Endpoint:', endpoint);
+        console.log('Nonce:', nonce);
+        console.log('Params:', params);
+        console.log('Data String:', data);
+        
         const response = await axios.post('https://api.bithumb.com/info/balance', 
-            'currency=' + currency,
+            params,
             {
                 headers: {
                     'Api-Key': connectKey,
@@ -83,7 +90,12 @@ app.post('/api/bithumb/balance', async (req, res) => {
             }
         );
         
-        const balance = parseFloat(response.data.data.total_krw || 0);
+        console.log('Bithumb Response:', JSON.stringify(response.data, null, 2));
+        
+        let balance = 0;
+        if (response.data.status === '0000' && response.data.data) {
+            balance = parseFloat(response.data.data.total_krw || 0);
+        }
         
         res.json({ 
             success: true, 
@@ -91,15 +103,20 @@ app.post('/api/bithumb/balance', async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Bithumb Error:', error.response ? error.response.data : error.message);
+        console.error('=== Bithumb Error Details ===');
+        console.error('Message:', error.message);
+        if (error.response) {
+            console.error('Status:', error.response.status);
+            console.error('Data:', JSON.stringify(error.response.data, null, 2));
+        }
+        
         res.json({ 
             success: false, 
-            error: error.message,
+            error: error.response?.data || error.message,
             balance: 0
         });
     }
 });
-
 // 바이낸스 API
 app.post('/api/binance/balance', async (req, res) => {
     try {
@@ -211,4 +228,5 @@ app.listen(PORT, HOST, () => {
     console.log('📊 대시보드를 열고 API 키를 입력하세요!');
     console.log('===========================================');
 });
+
 
