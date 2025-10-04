@@ -8,14 +8,17 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+const PORT = 3000;
+const HOST = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
+
+// 헬스체크 엔드포인트
 app.get('/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// 기존 코드들...
-app.post('/api/bybit/balance', async (req, res) => {
-
-const PORT = 3000;
+app.get('/', (req, res) => {
+    res.json({ message: 'Crypto Dashboard API Server Running' });
+});
 
 // 업비트 API
 app.post('/api/upbit/balance', async (req, res) => {
@@ -147,12 +150,10 @@ app.post('/api/bybit/balance', async (req, res) => {
         const timestamp = Date.now().toString();
         const recvWindow = '5000';
         
-        // V5 API Signature: timestamp + apiKey + recvWindow + queryString
         const queryString = 'accountType=UNIFIED';
         const signStr = timestamp + apiKey + recvWindow + queryString;
         const signature = crypto.createHmac('sha256', secretKey).update(signStr).digest('hex');
         
-        // ✅ 디버깅 로그 강화
         console.log('=== Bybit Request Debug ===');
         console.log('Timestamp:', timestamp);
         console.log('API Key:', apiKey.substring(0, 8) + '...');
@@ -185,7 +186,6 @@ app.post('/api/bybit/balance', async (req, res) => {
         });
         
     } catch (error) {
-        // ✅ 에러 로그 상세화
         console.error('=== Bybit Error Details ===');
         console.error('Message:', error.message);
         
@@ -205,20 +205,10 @@ app.post('/api/bybit/balance', async (req, res) => {
     }
 });
 
-const HOST = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
-
 app.listen(PORT, HOST, () => {
     console.log('===========================================');
     console.log('✅ 프록시 서버 실행 중!');
     console.log('🌐 주소: http://' + HOST + ':' + PORT);
     console.log('📊 대시보드를 열고 API 키를 입력하세요!');
     console.log('===========================================');
-
 });
-
-
-
-
-
-
-
